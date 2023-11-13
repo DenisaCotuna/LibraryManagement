@@ -1,3 +1,5 @@
+package Items;
+
 public abstract class Item {
     public String ID;
     public double price;

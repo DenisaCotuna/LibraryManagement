@@ -1,4 +1,6 @@
-public class Book extends Item implements Borrowable,Buyable{
+package Items;
+
+public class Book extends Item implements Borrowable, Buyable {
     private String title;
     private String author;
     private Integer copies;

@@ -1,4 +1,6 @@
-public class Album extends Item implements Buyable{
+package Items;
+
+public class Album extends Item implements Buyable {
     private String title;
     private String artist;
     private Integer copies;
