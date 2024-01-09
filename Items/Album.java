@@ -1,5 +1,7 @@
 package Items;
 
+import Exceptions.NotEnoughCopiesException;
+
 public class Album extends Item implements Buyable {
     private String title;
     private String artist;
@@ -16,16 +18,25 @@ public class Album extends Item implements Buyable {
         return title;
     }
 
+    public String getArtist() {
+        return artist;
+    }
+
+    public Integer getCopies() {
+        return copies;
+    }
+
     public void addCopies(Integer NoCopies){
         this.copies += NoCopies;
     }
 
-    public void removeCopies(Integer NoCopies){
+    public void removeCopies(Integer NoCopies) throws NotEnoughCopiesException {
+        if(this.copies - NoCopies < 0 ) throw new NotEnoughCopiesException("Not enough copies in stock");
         this.copies -= NoCopies;
     }
 
     @Override
-    public void buyItem(Integer NoCopies) {
+    public void buyItem(Integer NoCopies) throws NotEnoughCopiesException {
         removeCopies(NoCopies);
     }
 }

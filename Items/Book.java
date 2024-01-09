@@ -1,5 +1,7 @@
 package Items;
 
+import Exceptions.NotEnoughCopiesException;
+
 public class Book extends Item implements Borrowable, Buyable {
     private String title;
     private String author;
@@ -16,6 +18,22 @@ public class Book extends Item implements Borrowable, Buyable {
         this.borrowed = 0;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public Integer getCopies() {
+        return copies;
+    }
+
+    public Integer getBorrowed() {
+        return borrowed;
+    }
+
     public double getBorrowPrice() {
         return borrowPrice;
     }
@@ -24,11 +42,12 @@ public class Book extends Item implements Borrowable, Buyable {
         this.copies += NoCopies;
     }
 
-    public void removeCopies(Integer NoCopies){
+    public void removeCopies(Integer NoCopies) throws NotEnoughCopiesException {
+        if(this.copies - NoCopies < 0 ) throw new NotEnoughCopiesException("Not enough copies in stock");
         this.copies -= NoCopies;
     }
 
-    public void borrowBook(Integer NoCopies){
+    public void borrowBook(Integer NoCopies) {
         this.borrowed += NoCopies;
     }
 
@@ -37,12 +56,12 @@ public class Book extends Item implements Borrowable, Buyable {
     }
 
     @Override
-    public void buyItem(Integer NoCopies) {
+    public void buyItem(Integer NoCopies) throws NotEnoughCopiesException {
         removeCopies(NoCopies);
     }
 
     @Override
-    public void borrowItem(Integer NoCopies) {
+    public void borrowItem(Integer NoCopies) throws NotEnoughCopiesException {
         removeCopies(NoCopies);
         borrowBook(NoCopies);
     }
