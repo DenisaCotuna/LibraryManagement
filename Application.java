@@ -25,17 +25,175 @@ public class Application {
     private List<Transaction> transactionList = new ArrayList<>();
     private InputDevice id;
     private OutputDevice od;
+    private Integer noTransaction;
 
 
     public Application(InputDevice id, OutputDevice od) {
         this.id = id;
         this.od = od;
+        noTransaction = 0;
+    }
+
+    public void printInv(){
+        for(Book b:inventory.getBooks())
+        {
+            String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies: "+ b.getBorrowed();
+            System.out.println(content);
+        }
+        for(Album a:inventory.getAlbums())
+        {
+            String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies();
+            System.out.println(content);
+        }
+        System.out.println("");
+    }
+
+    public void addItemsFromFIle(String filename) throws IOException, NegativeNumberException, InvalidItemTypeException{
+        try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
+            String itemtype;
+            while ((itemtype = reader.readLine()) != null)
+            {
+                if(!(itemtype.equals("Book")|| itemtype.equals("book") || itemtype.equals("Album") || itemtype.equals("album"))) {
+                    throw new InvalidItemTypeException("Invalid item type. Item type can only be Book or Album");
+                }
+                String iditem = reader.readLine();
+                try {
+                    double price = Double.parseDouble(reader.readLine());
+                    String title = reader.readLine();
+                    String author = reader.readLine();
+                    Integer NoCopies = Integer.parseInt(reader.readLine());
+                    if(price <= 0.0) throw new NegativeNumberException("Price is <= 0.0");
+                    if(NoCopies <= 0) throw new NegativeNumberException("Number of copies <= 0");
+                    if(itemtype.equals("Book")) inventory.addBook(iditem,price,title,author,NoCopies);
+                    else inventory.addAlbum(iditem,price,title,author,NoCopies);
+                }catch (NumberFormatException e){
+                    e.printStackTrace();
+                }
+            }
+            Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
+            for(Book b:inventory.getBooks())
+            {
+                String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + "\n";
+                od.writetoFile(content,"inventory.txt",true);
+            }
+            for(Album a:inventory.getAlbums())
+            {
+                String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies() + "\n";
+                od.writetoFile(content,"inventory.txt",true);
+            }
+        }catch (FileNotFoundException e)
+        {
+            System.err.println("Could not find/open file. Please try again.");
+            e.printStackTrace();
+        }
+    }
+
+    public void transactionFromFile(String filename)throws IOException, NegativeNumberException,NotEnoughCopiesException, InvalidItemTypeException{
+        try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
+            noTransaction++;
+            Transaction newTransaction = new Transaction(noTransaction);
+            String itemtype;
+            while ((itemtype = reader.readLine()) != null){
+                if(!(itemtype.equals("Book")|| itemtype.equals("book") || itemtype.equals("Album") || itemtype.equals("album"))) {
+                    throw new InvalidItemTypeException("Invalid item type. Item type can only be Book or Album");
+                }
+                String ID = reader.readLine();
+                boolean found = false;
+                if(itemtype.equals("Book")||itemtype.equals("book")){
+                    for(Book b: inventory.getBooks()){
+                        if(b.getID().equals(ID)){
+                            found = true;
+                            if(b.getCopies() == 0){
+                                System.out.println("There is no copies in stock of the item with ID = "+ ID);
+                                break;
+                            }
+                            String borrow = reader.readLine();
+                            Integer noCopies = null;
+                            try {
+                                noCopies = Integer.parseInt(reader.readLine());
+                                if(noCopies <= 0) throw new NegativeNumberException("Number of copies <= 0");
+                            }catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
+                            if (b.getCopies() - noCopies < 0) throw new NotEnoughCopiesException("Not enough copies in stock");
+                            if(borrow.equals("borrow"))
+                                newTransaction.addItem(b,true, noCopies);
+                            else if(borrow.equals("buy")) newTransaction.addItem(b,false, noCopies);
+                            else System.out.println("Couldn't add item(s) with ID = "+ID);
+                        }
+                    }
+                    if(!found) System.out.println("Sorry the book with ID = " + ID + " doesn't exist in the inventory");
+                }
+                else{
+                    for (Album a: inventory.getAlbums()){
+                        if(a.getID().equals(ID)){
+                            found = true;
+                            if (a.getCopies() == 0)
+                            {
+                                System.out.println("There is no copies in stock of this item with ID = " + ID);
+                                break;
+                            }
+                            Integer noCopies = null;
+                            try {
+                                noCopies = Integer.parseInt(reader.readLine());
+                                if(noCopies <= 0) throw new NegativeNumberException("Number of copies <= 0");
+                            }catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
+                            if(a.getCopies() - noCopies < 0) throw new NotEnoughCopiesException("Not enough copies in stock");
+                            newTransaction.addItem(a, false, noCopies);
+                        }
+                    }
+                }
+            }
+            Files.newBufferedWriter(Path.of("currentTransaction.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
+            String contentNo = "Transaction number: " + noTransaction + "\n";
+            od.writetoFile(contentNo,"currentTransaction.txt",true);
+            for(Map.Entry<Item, Map<Boolean, Integer>> set : newTransaction.getItemList().entrySet())
+            {
+                Map<Boolean,Integer> itemMap = set.getValue();
+                for (Map.Entry<Boolean,Integer> set2 : itemMap.entrySet()){
+                    if(set.getKey() instanceof Book){
+                        if(set2.getKey()){
+                            String content = "Book ID = " + set.getKey().getID() + " borrow " + set2.getValue() + " x " + ((Book) set.getKey()).getBorrowPrice() + "\n";
+                            od.writetoFile(content,"currentTransaction.txt",true);
+                        }
+                        else {
+                            String content = "Book ID = " + set.getKey().getID() + " buy " + set2.getValue() + " x " + ((Book) set.getKey()).getPrice() + "\n";
+                            od.writetoFile(content,"currentTransaction.txt",true);
+                        }
+                    }
+                    else {
+                        String content = "Album ID = " + set.getKey().getID() + " buy " + set2.getValue() + " x " + ((Album) set.getKey()).getPrice() + "\n";
+                        od.writetoFile(content,"currentTransaction.txt",true);
+                    }
+                }
+            }
+            newTransaction.doTotal();
+            String content1 = "The total of the transaction is " + newTransaction.getTotal();
+            od.writetoFile(content1,"currentTransaction.txt", true);
+            transactionList.add(newTransaction);
+            Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
+            for(Book b:inventory.getBooks())
+            {
+                String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies = " + b.getBorrowed() + "\n";
+                od.writetoFile(content,"inventory.txt",true);
+            }
+            for(Album a:inventory.getAlbums())
+            {
+                String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies() + "\n";
+                od.writetoFile(content,"inventory.txt",true);
+            }
+        }catch (FileNotFoundException e)
+        {
+            System.err.println("Could not find/open file. Please try again.");
+            e.printStackTrace();
+        }
     }
 
     public void run() throws IOException, NegativeNumberException, NotEnoughCopiesException, InvalidItemTypeException {
         while (true)
         {
-            Integer noTransaction = 0;
             System.out.println("Hello! What would you like to do?");
             System.out.println("Type 1 if you want to add one or more items to inventory.");
             System.out.println("Type 2 if you want to make one or more transactions.");
@@ -55,44 +213,7 @@ public class Application {
                     {
                         System.out.println("Type the name of the file you wish to add input from.");
                         String filename = id.read();
-                        try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
-                            String itemtype;
-                            while ((itemtype = reader.readLine()) != null)
-                            {
-                                if(!(itemtype.equals("Book")|| itemtype.equals("book") || itemtype.equals("Album") || itemtype.equals("album"))) {
-                                    throw new InvalidItemTypeException("Invalid item type. Item type can only be Book or Album");
-                                }
-                                String iditem = reader.readLine();
-                                try {
-                                    double price = Double.parseDouble(reader.readLine());
-                                    String title = reader.readLine();
-                                    String author = reader.readLine();
-                                    Integer NoCopies = Integer.parseInt(reader.readLine());
-                                    if(price <= 0.0) throw new NegativeNumberException("Price is <= 0.0");
-                                    if(NoCopies <= 0) throw new NegativeNumberException("Number of copies <= 0");
-                                    if(itemtype.equals("Book")) inventory.addBook(iditem,price,title,author,NoCopies);
-                                    else inventory.addAlbum(iditem,price,title,author,NoCopies);
-                                }catch (NumberFormatException e){
-                                    e.printStackTrace();
-                                }
-
-                            }
-                            Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
-                            for(Book b:inventory.getBooks())
-                            {
-                                String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + "\n";
-                                od.writetoFile(content,"inventory.txt",true);
-                            }
-                            for(Album a:inventory.getAlbums())
-                            {
-                                String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies() + "\n";
-                                od.writetoFile(content,"inventory.txt",true);
-                            }
-                        }catch (FileNotFoundException e)
-                        {
-                            System.err.println("Could not find/open file. Please try again.");
-                            e.printStackTrace();
-                        }
+                        addItemsFromFIle(filename);
                     }
                     else if(answer.equals("hand")) {
                         String cont = null;
@@ -144,7 +265,7 @@ public class Application {
                                 Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
                                 for(Book b:inventory.getBooks())
                                 {
-                                    String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + "\n";
+                                    String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies = " + b.getBorrowed() + "\n";
                                     od.writetoFile(content,"inventory.txt",true);
                                 }
                                 for(Album a:inventory.getAlbums())
@@ -196,7 +317,7 @@ public class Application {
                                 Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
                                 for(Book b:inventory.getBooks())
                                 {
-                                    String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + "\n";
+                                    String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies = " + b.getBorrowed() + "\n";
                                     od.writetoFile(content,"inventory.txt",true);
                                 }
                                 for(Album a:inventory.getAlbums())
@@ -222,46 +343,7 @@ public class Application {
                     if(answer.equals("file")){
                         System.out.println("Type the name of the file you wish to add input from.");
                         String filename = id.read();
-                        try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
-                            noTransaction++;
-                            Transaction newTransaction = new Transaction(noTransaction);
-                            String itemtype;
-                            while ((itemtype = reader.readLine()) != null){
-                                if(!(itemtype.equals("Book")|| itemtype.equals("book") || itemtype.equals("Album") || itemtype.equals("album"))) {
-                                    throw new InvalidItemTypeException("Invalid item type. Item type can only be Book or Album");
-                                }
-                                String ID = reader.readLine();
-                                boolean found = false;
-                                if(itemtype.equals("Book")||itemtype.equals("book")){
-                                    for(Book b: inventory.getBooks()){
-                                        if(b.getID().equals(ID)){
-                                            found = true;
-                                            if(b.getCopies() == 0){
-                                                System.out.println("There is no copies in stock of the item with ID = "+ ID);
-                                                break;
-                                            }
-                                            String borrow = reader.readLine();
-                                            Integer noCopies = null;
-                                            try {
-                                                noCopies = Integer.parseInt(reader.readLine());
-                                                if(noCopies <= 0) throw new NegativeNumberException("Number of copies <= 0");
-                                            }catch (NumberFormatException e) {
-                                                e.printStackTrace();
-                                            }
-                                            if (b.getCopies() - noCopies < 0) throw new NotEnoughCopiesException("Not enough copies in stock");
-                                            if(borrow.equals("borrow"))
-                                                newTransaction.addItem(b,true, noCopies);
-                                            else if(borrow.equals("buy")) newTransaction.addItem(b,false, noCopies);
-                                            else System.out.println("Couldn't add item(s) with ID = "+ID);
-                                        }
-                                    }
-                                }
-                            }
-                        }catch (FileNotFoundException e)
-                        {
-                            System.err.println("Could not find/open file. Please try again.");
-                            e.printStackTrace();
-                        }
+                        transactionFromFile(filename);
                     }
                     else if(answer.equals("hand")){
                         String newT = null;
@@ -340,6 +422,8 @@ public class Application {
                                 itemtype = id.read();
                             }while (!itemtype.equals("total"));
                             Files.newBufferedWriter(Path.of("currentTransaction.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
+                            String contentNo = "Transaction number: " + noTransaction + "\n";
+                            od.writetoFile(contentNo,"currentTransaction.txt",true);
                             for(Map.Entry<Item, Map<Boolean, Integer>> set : newTransaction.getItemList().entrySet())
                             {
                                 Map<Boolean,Integer> itemMap = set.getValue();
@@ -361,8 +445,21 @@ public class Application {
                                 }
                             }
                             newTransaction.doTotal();
+                            String content1 = "The total of the transaction is " + newTransaction.getTotal();
+                            od.writetoFile(content1,"currentTransaction.txt", true);
                             System.out.println("The total of the transaction is " + newTransaction.getTotal());
                             transactionList.add(newTransaction);
+                            Files.newBufferedWriter(Path.of("inventory.txt"), new StandardOpenOption[]{StandardOpenOption.TRUNCATE_EXISTING});
+                            for(Book b:inventory.getBooks())
+                            {
+                                String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies = " + b.getBorrowed() + "\n";
+                                od.writetoFile(content,"inventory.txt",true);
+                            }
+                            for(Album a:inventory.getAlbums())
+                            {
+                                String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies() + "\n";
+                                od.writetoFile(content,"inventory.txt",true);
+                            }
                             System.out.println("If you want to make a new transaction, type new, else type done.");
                             newT = id.read();
                         }while (newT.equals("new"));
@@ -372,16 +469,7 @@ public class Application {
                 }
             }
             else if(cmd.equals("3")){
-                for(Book b:inventory.getBooks())
-                {
-                    String content = "Book: ID = " + b.getID() + " price = " + b.getPrice() + " title = " + b.getTitle() + " author = " + b.getAuthor() + " number of copies = " + b.getCopies() + " number of borrowed copies: "+ b.getBorrowed();
-                    System.out.print(content);
-                }
-                for(Album a:inventory.getAlbums())
-                {
-                    String content = "Album: ID = " + a.getID() + " price = " + a.getPrice() + " title = " + a.getTitle() + " artist = " + a.getArtist() + " number of copies = " + a.getCopies() + "\n";
-                    System.out.print(content);
-                }
+                printInv();
             }
             else if(cmd.equals("4")){
                 System.out.println("Is the item you are searching for a book or an album?");
@@ -416,10 +504,11 @@ public class Application {
                 }
                 else System.out.println("Invalid. Type book or album");
             }
+            else System.out.println("Invalid command.");
         }
     }
-    public void addInventory()
-    {
 
-    }
+
 }
+
+

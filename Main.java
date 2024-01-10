@@ -1,6 +1,8 @@
 import Exceptions.InvalidItemTypeException;
 import Exceptions.NegativeNumberException;
 import Exceptions.NotEnoughCopiesException;
+import Items.Album;
+import Items.Book;
 import io.InputDevice;
 import io.OutputDevice;
 
@@ -13,9 +15,18 @@ public class Main {
         Application app = new Application(id,od);
         if(args.length == 0)  app.run();
         else{
-            for (String argument:args)
+            for (int i = 0; i < args.length; i++)
             {
-                System.out.println(argument);
+                if(args[i].equals("1")){
+                    app.addItemsFromFIle(args[i+1]);
+                    i++;
+                }else if(args[i].equals("2")){
+                    app.transactionFromFile(args[i+1]);
+                    i++;
+                }
+                else if(args[i].equals("3")){
+                    app.printInv();
+                }
             }
         }
     }
