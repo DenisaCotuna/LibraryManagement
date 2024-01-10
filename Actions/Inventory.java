@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Inventory {
+
+    private List<Book> books = new ArrayList<>();
+    private List<Album> albums = new ArrayList<>();
+    private double cash;
     public List<Book> getBooks() {
         return books;
     }
@@ -18,11 +22,6 @@ public class Inventory {
     public double getCash() {
         return cash;
     }
-
-    private List<Book> books = new ArrayList<>();
-    private List<Album> albums = new ArrayList<>();
-    private double cash;
-
     public Inventory()
     {
         this.cash = 0;

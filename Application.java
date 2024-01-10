@@ -85,6 +85,8 @@ public class Application {
         {
             System.err.println("Could not find/open file. Please try again.");
             e.printStackTrace();
+        }catch (IOException e){
+            e.printStackTrace();
         }
     }
 
@@ -187,6 +189,8 @@ public class Application {
         }catch (FileNotFoundException e)
         {
             System.err.println("Could not find/open file. Please try again.");
+            e.printStackTrace();
+        }catch (IOException e){
             e.printStackTrace();
         }
     }
