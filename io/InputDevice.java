@@ -27,4 +27,7 @@ public class InputDevice {
         return null;
     }
 
+    public InputStream getInputStream() {
+        return inputStream;
+    }
 }

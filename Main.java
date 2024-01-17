@@ -1,8 +1,7 @@
+import Application.Application;
 import Exceptions.InvalidItemTypeException;
 import Exceptions.NegativeNumberException;
 import Exceptions.NotEnoughCopiesException;
-import Items.Album;
-import Items.Book;
 import io.InputDevice;
 import io.OutputDevice;
 
@@ -13,6 +12,14 @@ public class Main {
         InputDevice id = new InputDevice(System.in);
         OutputDevice od = new OutputDevice(System.out);
         Application app = new Application(id,od);
+
+        DatabaseCommands db = new DatabaseCommands();
+
+        db.createNewTable();
+        System.out.println("Adding album...");
+        db.insert("A123",5);
+        db.printAllContent();
+
         if(args.length == 0)  app.run();
         else{
             for (int i = 0; i < args.length; i++)

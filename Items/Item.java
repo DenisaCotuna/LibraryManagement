@@ -4,9 +4,6 @@ public abstract class Item {
     private String ID;
     public double price;
 
-    public double getPrice() {
-        return price;
-    }
 
     public Item(String ID, double price) {
         this.ID = ID;
@@ -17,5 +14,7 @@ public abstract class Item {
         return ID;
     }
 
-
+    public double getPrice() {
+        return price;
+    }
 }

@@ -1,5 +1,6 @@
 package Actions;
 
+import Exceptions.NegativeNumberException;
 import Exceptions.NotEnoughCopiesException;
 import Items.Book;
 import Items.Borrowable;
@@ -43,7 +44,7 @@ public class Transaction {
     }
 
 
-    public void doTotal() throws NotEnoughCopiesException {
+    public void doTotal() throws NotEnoughCopiesException, NegativeNumberException {
         for(Map.Entry<Item, Map<Boolean, Integer>> set : itemList.entrySet()){
             Map<Boolean,Integer> itemMap = set.getValue();
             for(Map.Entry<Boolean,Integer> set2 : itemMap.entrySet()) {

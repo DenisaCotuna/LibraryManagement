@@ -23,6 +23,10 @@ public class OutputDevice {
         }
     }
 
+    public OutputStream getOutputStream() {
+        return outputStream;
+    }
+
     public void writetoFile(String content, String filename, Boolean append) throws IOException{
         try{
             FileWriter file = new FileWriter(filename,append);

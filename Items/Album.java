@@ -1,5 +1,6 @@
 package Items;
 
+import Exceptions.NegativeNumberException;
 import Exceptions.NotEnoughCopiesException;
 
 public class Album extends Item implements Buyable {
@@ -26,17 +27,19 @@ public class Album extends Item implements Buyable {
         return copies;
     }
 
-    public void addCopies(Integer NoCopies){
+    public void addCopies(Integer NoCopies) throws NegativeNumberException {
+        if(NoCopies <= 0) throw new NegativeNumberException("The number you gave for the copies is <= 0");
         this.copies += NoCopies;
     }
 
-    public void removeCopies(Integer NoCopies) throws NotEnoughCopiesException {
+    public void removeCopies(Integer NoCopies) throws NotEnoughCopiesException, NegativeNumberException {
+        if(NoCopies <= 0) throw new NegativeNumberException("The number you gave for the copies is <= 0");
         if(this.copies - NoCopies < 0 ) throw new NotEnoughCopiesException("Not enough copies in stock");
         this.copies -= NoCopies;
     }
 
     @Override
-    public void buyItem(Integer NoCopies) throws NotEnoughCopiesException {
+    public void buyItem(Integer NoCopies) throws NotEnoughCopiesException, NegativeNumberException {
         removeCopies(NoCopies);
     }
 }

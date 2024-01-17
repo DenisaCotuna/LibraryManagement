@@ -1,3 +1,5 @@
+package Application;
+
 import Actions.Inventory;
 import Actions.Transaction;
 import Exceptions.InvalidItemTypeException;
@@ -32,6 +34,18 @@ public class Application {
         this.id = id;
         this.od = od;
         noTransaction = 0;
+    }
+
+    public InputDevice getId() {
+        return id;
+    }
+
+    public OutputDevice getOd() {
+        return od;
+    }
+
+    public Integer getNoTransaction() {
+        return noTransaction;
     }
 
     public void printInv(){
